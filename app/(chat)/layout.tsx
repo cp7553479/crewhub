@@ -14,7 +14,8 @@ export default async function Layout({
   children: React.ReactNode;
 }) {
   const [session, cookieStore] = await Promise.all([auth(), cookies()]);
-  const isCollapsed = cookieStore.get('sidebar:state')?.value !== 'true';
+  // 默认展开：当 cookie 缺失时视为未折叠
+  const isCollapsed = (cookieStore.get('sidebar:state')?.value ?? 'true') !== 'true';
 
   return (
     <>

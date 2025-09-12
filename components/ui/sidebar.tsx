@@ -20,7 +20,6 @@ import {
 } from '@/components/ui/tooltip';
 
 const SIDEBAR_COOKIE_NAME = 'sidebar:state';
-const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7;
 const SIDEBAR_WIDTH = '16rem';
 const SIDEBAR_WIDTH_MOBILE = '18rem';
 const SIDEBAR_WIDTH_ICON = '3rem';
@@ -83,8 +82,8 @@ const SidebarProvider = React.forwardRef<
           _setOpen(openState);
         }
 
-        // This sets the cookie to keep the sidebar state.
-        document.cookie = `${SIDEBAR_COOKIE_NAME}=${openState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`;
+        // Persist the sidebar state for 30 days (30 * 24 * 60 * 60 = 2592000 seconds).
+        document.cookie = `${SIDEBAR_COOKIE_NAME}=${openState}; path=/; max-age=2592000`;
       },
       [setOpenProp, open],
     );
