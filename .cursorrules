@@ -1,0 +1,72 @@
+# CrewHub 项目 Cursor Rules
+
+## 组件编程风格规范
+
+### 组件文件结构顺序
+1. **导入依赖** - 按顺序导入 React、第三方库、内部组件、类型和工具
+2. **类型定义** - 定义组件 Props 接口和相关类型
+3. **函数式组件 + Hooks** - 组件主体，包含状态管理和业务逻辑
+4. **事件处理函数分离** - 低于5行代码且不可复用的函数可内联，超过5行或可复用的函数分离
+5. **组件导出** - 使用命名导出
+
+### 示例结构
+```typescript
+// 1. 导入依赖
+import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
+import { Button } from './ui/button';
+import type { ComponentProps } from '@/lib/types';
+
+// 2. 类型定义
+interface ComponentProps {
+  title: string;
+  onAction: () => void;
+}
+
+// 3. 函数式组件 + Hooks
+export function Component({ title, onAction }: ComponentProps) {
+  const [isVisible, setIsVisible] = useState(false);
+  
+  useEffect(() => {
+    // 副作用逻辑
+  }, []);
+
+  // 4. 事件处理函数分离（超过5行或可复用）
+  const handleComplexAction = () => {
+    // 复杂的业务逻辑
+    // 超过5行代码
+    // 或者可复用的逻辑
+  };
+
+  // 5. 渲染逻辑
+  return (
+    <div>
+      {/* 内联简单事件处理（低于5行且不可复用） */}
+      <button onClick={() => setIsVisible(true)}>显示</button>
+      
+      {/* 分离的事件处理函数 */}
+      <Button onClick={handleComplexAction}>{title}</Button>
+    </div>
+  );
+}
+
+// 5. 组件导出（命名导出）
+export { Component };
+```
+
+### 编码规范
+- 使用函数式组件和 React Hooks
+- 完整的 TypeScript 类型定义
+- 使用 memo 包装纯组件进行性能优化
+- 状态管理：本地状态用 useState，服务器状态用 SWR，全局状态用 Context
+- 使用 Tailwind CSS 进行样式管理
+- 遵循单一职责原则，每个组件专注一个功能
+
+## 页面开发代码结构
+
+### App Router 文件结构
+- **页面文件**：`page.tsx` 定义页面内容，默认 Server Component
+- **布局文件**：`layout.tsx` 定义页面布局和 Providers
+- **Server Actions**：`actions.ts` 处理表单提交和用户交互
+- **API 路由**：`api/*/route.ts` 处理 HTTP 请求，导出 GET/POST/PATCH/DELETE
+

@@ -48,9 +48,7 @@ With the [AI SDK](https://ai-sdk.dev/docs/introduction), you can also switch to 
 
 ## Deploy Your Own
 
-You can deploy your own version of the Next.js AI Chatbot to Vercel with one click:
-
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fvercel%2Fai-chatbot&env=AUTH_SECRET&envDescription=Generate%20a%20random%20secret%20to%20use%20for%20authentication&envLink=https%3A%2F%2Fgenerate-secret.vercel.app%2F32&project-name=my-awesome-chatbot&repository-name=my-awesome-chatbot&demo-title=AI%20Chatbot&demo-description=An%20Open-Source%20AI%20Chatbot%20Template%20Built%20With%20Next.js%20and%20the%20AI%20SDK%20by%20Vercel&demo-url=https%3A%2F%2Fchat.vercel.ai&products=%5B%7B%22type%22%3A%22integration%22%2C%22protocol%22%3A%22storage%22%2C%22productSlug%22%3A%22neon%22%2C%22integrationSlug%22%3A%22neon%22%7D%2C%7B%22type%22%3A%22blob%22%7D%5D)
+You can deploy your own version of this app to your preferred platform.
 
 ## Running locally
 
@@ -68,3 +66,111 @@ pnpm dev
 ```
 
 Your app template should now be running on [localhost:3000](http://localhost:3000).
+
+## 项目文件结构
+
+本项目采用 Next.js App Router 架构，以下是主要的目录结构和说明：
+
+```
+crewhub/
+├── app/                          # Next.js App Router 应用目录
+│   ├── (auth)/                   # 认证相关页面组
+│   │   ├── actions.ts            # 认证服务器操作
+│   │   ├── auth.config.ts        # Auth.js 配置
+│   │   ├── auth.ts               # 认证设置
+│   │   ├── login/                # 登录页面
+│   │   └── register/             # 注册页面
+│   ├── (chat)/                   # 聊天相关页面组
+│   │   ├── actions.ts            # 聊天服务器操作
+│   │   ├── api/                  # API 路由
+│   │   ├── chat/                 # 聊天页面
+│   │   ├── layout.tsx            # 聊天布局
+│   │   └── page.tsx              # 聊天主页
+│   ├── globals.css               # 全局样式
+│   └── layout.tsx                # 根布局
+├── artifacts/                    # 工件/文档生成功能
+│   ├── actions.ts                # 工件操作
+│   ├── code/                     # 代码工件
+│   ├── image/                    # 图像工件
+│   ├── sheet/                    # 表格工件
+│   └── text/                     # 文本工件
+├── components/                   # React 组件
+│   ├── elements/                 # 基础元素组件
+│   ├── ui/                       # UI 组件库 (shadcn/ui)
+│   ├── artifact.tsx              # 工件组件
+│   ├── chat.tsx                  # 聊天组件
+│   ├── message.tsx               # 消息组件
+│   └── ...                       # 其他组件
+├── hooks/                        # React Hooks
+│   ├── use-artifact.ts           # 工件相关 Hook
+│   ├── use-messages.tsx          # 消息相关 Hook
+│   └── ...                       # 其他 Hooks
+├── lib/                          # 核心库文件
+│   ├── const/                    # 常量定义
+│   │   └── schema-utils.ts       # 数据库模式工具和常量
+│   ├── db/                       # 数据库相关
+│   │   ├── schema.ts             # Drizzle 数据库模式
+│   │   ├── queries.ts            # 数据库查询函数
+│   │   ├── migrate.ts            # 数据库迁移脚本
+│   │   └── migrations/           # 迁移文件
+│   ├── ai/                       # AI 相关功能
+│   │   ├── models.ts             # AI 模型配置
+│   │   ├── prompts.ts            # 提示词模板
+│   │   └── tools/                # AI 工具
+│   ├── artifacts/                # 工件处理
+│   ├── editor/                   # 编辑器相关
+│   ├── errors.ts                 # 错误处理
+│   ├── types.ts                  # TypeScript 类型定义
+│   └── utils.ts                  # 工具函数
+├── examples/                     # 示例代码
+│   └── schema-usage-examples.ts  # Schema 使用示例
+├── tests/                        # 测试文件
+│   ├── e2e/                      # 端到端测试
+│   ├── pages/                    # 页面测试
+│   └── prompts/                  # 提示词测试
+├── drizzle.config.ts             # Drizzle ORM 配置
+├── middleware.ts                 # Next.js 中间件
+├── next.config.ts                # Next.js 配置
+├── package.json                  # 项目依赖和脚本
+└── tsconfig.json                 # TypeScript 配置
+```
+
+### 核心目录说明
+
+#### `/app` - Next.js App Router
+- **`(auth)/`**: 认证相关页面，包含登录、注册功能
+- **`(chat)/`**: 聊天功能页面，主要的用户交互界面
+- **`globals.css`**: 全局样式文件，使用 Tailwind CSS
+
+#### `/components` - React 组件
+- **`elements/`**: 基础元素组件，如消息、代码块等
+- **`ui/`**: UI 组件库，基于 shadcn/ui 和 Radix UI
+- **主要组件**: 聊天、消息、工件、工具栏等核心功能组件
+
+#### `/lib` - 核心库
+- **`const/`**: 常量定义，包含数据库模式工具和常量
+- **`db/`**: 数据库相关文件
+  - `schema.ts`: Drizzle ORM 数据库模式定义
+  - `queries.ts`: 数据库查询函数集合
+  - `migrate.ts`: 数据库迁移脚本
+- **`ai/`**: AI 功能相关
+  - `models.ts`: AI 模型配置
+  - `prompts.ts`: 提示词模板
+  - `tools/`: AI 工具定义
+
+#### `/artifacts` - 工件系统
+支持多种类型的工件生成和管理：
+- **代码工件**: 代码生成和编辑
+- **图像工件**: 图像处理和编辑
+- **表格工件**: 数据表格处理
+- **文本工件**: 文档生成和编辑
+
+### 数据库管理
+
+项目使用 Drizzle ORM 管理 PostgreSQL 数据库：
+
+- **模式定义**: `lib/db/schema.ts` 定义了所有数据库表结构
+- **查询函数**: `lib/db/queries.ts` 包含所有数据库操作
+- **常量工具**: `lib/const/schema-utils.ts` 提供类型安全的字段和表名常量
+- **迁移管理**: 使用 `drizzle-kit` 进行数据库迁移
+
