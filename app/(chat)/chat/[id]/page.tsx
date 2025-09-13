@@ -1,10 +1,9 @@
 import { cookies } from 'next/headers';
 import { notFound, redirect } from 'next/navigation';
-
-import { auth } from '@/app/(auth)/auth';
 import { Chat } from '@/components/chat';
 import { getChatById, getMessagesByChatId } from '@/lib/db/queries';
 import { DataStreamHandler } from '@/components/data-stream-handler';
+import { createClient } from '@/utils/supabase/server';
 import { DEFAULT_CHAT_MODEL } from '@/lib/ai/models';
 import { convertToUIMessages } from '@/lib/utils';
 
@@ -17,18 +16,12 @@ export default async function Page(props: { params: Promise<{ id: string }> }) {
     notFound();
   }
 
-  const session = await auth();
-
-  if (!session) {
-    redirect('/api/auth/guest');
-  }
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect('/login');
 
   if (chat.visibility === 'private') {
-    if (!session.user) {
-      return notFound();
-    }
-
-    if (session.user.id !== chat.userId) {
+    if (user.id !== chat.userId) {
       return notFound();
     }
   }
@@ -50,8 +43,7 @@ export default async function Page(props: { params: Promise<{ id: string }> }) {
           initialMessages={uiMessages}
           initialChatModel={DEFAULT_CHAT_MODEL}
           initialVisibilityType={chat.visibility}
-          isReadonly={session?.user?.id !== chat.userId}
-          session={session}
+          isReadonly={user.id !== chat.userId}
           autoResume={true}
           initialLastContext={chat.lastContext ?? undefined}
         />
@@ -67,8 +59,7 @@ export default async function Page(props: { params: Promise<{ id: string }> }) {
         initialMessages={uiMessages}
         initialChatModel={chatModelFromCookie.value}
         initialVisibilityType={chat.visibility}
-        isReadonly={session?.user?.id !== chat.userId}
-        session={session}
+        isReadonly={user.id !== chat.userId}
         autoResume={true}
         initialLastContext={chat.lastContext ?? undefined}
       />

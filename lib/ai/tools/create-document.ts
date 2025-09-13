@@ -1,7 +1,7 @@
 import { generateUUID } from '@/lib/utils';
 import { tool, type UIMessageStreamWriter } from 'ai';
 import { z } from 'zod';
-import type { Session } from 'next-auth';
+type Session = { id: string; email: string | null };
 import {
   artifactKinds,
   documentHandlersByArtifactKind,

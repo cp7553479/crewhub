@@ -1,4 +1,4 @@
-import type { UserType } from '@/app/(auth)/auth';
+type UserType = 'regular' | 'guest';
 import type { ChatModel } from './models';
 
 interface Entitlements {

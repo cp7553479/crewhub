@@ -1,4 +1,4 @@
-import { auth } from '@/app/(auth)/auth';
+import { createClient } from '@/utils/supabase/server';
 import {
   getChatById,
   getMessagesByChatId,
@@ -28,9 +28,9 @@ export async function GET(
     return new ChatSDKError('bad_request:api').toResponse();
   }
 
-  const session = await auth();
-
-  if (!session?.user) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
     return new ChatSDKError('unauthorized:chat').toResponse();
   }
 
@@ -46,7 +46,7 @@ export async function GET(
     return new ChatSDKError('not_found:chat').toResponse();
   }
 
-  if (chat.visibility === 'private' && chat.userId !== session.user.id) {
+  if (chat.visibility === 'private' && chat.userId !== user.id) {
     return new ChatSDKError('forbidden:chat').toResponse();
   }
 

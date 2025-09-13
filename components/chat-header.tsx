@@ -8,18 +8,15 @@ import { PlusIcon } from './icons';
 import { useSidebar } from './ui/sidebar';
 import { memo } from 'react';
 import { type VisibilityType, VisibilitySelector } from './visibility-selector';
-import type { Session } from 'next-auth';
 
 function PureChatHeader({
   chatId,
   selectedVisibilityType,
   isReadonly,
-  session,
 }: {
   chatId: string;
   selectedVisibilityType: VisibilityType;
   isReadonly: boolean;
-  session: Session;
 }) {
   const router = useRouter();
   const { open } = useSidebar();

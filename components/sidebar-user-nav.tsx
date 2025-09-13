@@ -2,8 +2,8 @@
 
 import { ChevronUp } from 'lucide-react';
 import Image from 'next/image';
-import type { User } from 'next-auth';
-import { signOut, useSession } from 'next-auth/react';
+import { createClient } from '@/utils/supabase/client';
+import { useEffect, useState } from 'react';
 import { useTheme } from 'next-themes';
 
 import {
@@ -21,21 +21,32 @@ import {
 import { useRouter } from 'next/navigation';
 import { toast } from './toast';
 import { LoaderIcon } from './icons';
-import { guestRegex } from '@/lib/constants';
-
-export function SidebarUserNav({ user }: { user: User }) {
+export function SidebarUserNav() {
   const router = useRouter();
-  const { data, status } = useSession();
+  const isLoading = false;
   const { setTheme, resolvedTheme } = useTheme();
+  const supabase = createClient();
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
 
-  const isGuest = guestRegex.test(data?.user?.email ?? '');
+  useEffect(() => {
+    let mounted = true;
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!mounted) return;
+      setIsAuthenticated(Boolean(user));
+      setUserEmail(user?.email ?? null);
+    });
+    return () => {
+      mounted = false;
+    };
+  }, [supabase]);
 
   return (
     <SidebarMenu>
       <SidebarMenuItem>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            {status === 'loading' ? (
+            {isLoading ? (
               <SidebarMenuButton className="h-10 justify-between bg-background data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground">
                 <div className="flex flex-row gap-2">
                   <div className="size-6 animate-pulse rounded-full bg-zinc-500/30" />
@@ -53,14 +64,14 @@ export function SidebarUserNav({ user }: { user: User }) {
                 className="h-10 bg-background data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
               >
                 <Image
-                  src={`https://avatar.vercel.sh/${user.email}`}
-                  alt={user.email ?? 'User Avatar'}
+                  src={`https://avatar.vercel.sh/${userEmail ?? 'user'}`}
+                  alt={userEmail ?? 'User Avatar'}
                   width={24}
                   height={24}
                   className="rounded-full"
                 />
                 <span data-testid="user-email" className="truncate">
-                  {isGuest ? 'Guest' : user?.email}
+                  {isAuthenticated ? userEmail : 'Login to your account'}
                 </span>
                 <ChevronUp className="ml-auto" />
               </SidebarMenuButton>
@@ -85,27 +96,18 @@ export function SidebarUserNav({ user }: { user: User }) {
               <button
                 type="button"
                 className="w-full cursor-pointer"
-                onClick={() => {
-                  if (status === 'loading') {
-                    toast({
-                      type: 'error',
-                      description:
-                        'Checking authentication status, please try again!',
-                    });
-
+                onClick={async () => {
+                  if (!isAuthenticated) {
+                    router.push('/login');
                     return;
                   }
 
-                  if (isGuest) {
-                    router.push('/login');
-                  } else {
-                    signOut({
-                      redirectTo: '/',
-                    });
-                  }
+                  await supabase.auth.signOut();
+                  router.push('/');
+                  router.refresh();
                 }}
               >
-                {isGuest ? 'Login to your account' : 'Sign out'}
+                {isAuthenticated ? 'Sign out' : 'Login to your account'}
               </button>
             </DropdownMenuItem>
           </DropdownMenuContent>

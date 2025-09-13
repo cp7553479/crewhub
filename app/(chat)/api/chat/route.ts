@@ -7,7 +7,8 @@ import {
   stepCountIs,
   streamText,
 } from 'ai';
-import { auth, type UserType } from '@/app/(auth)/auth';
+import { createClient } from '@/utils/supabase/server';
+type UserType = 'regular' | 'guest';
 import { type RequestHints, systemPrompt } from '@/lib/ai/prompts';
 import {
   createStreamId,
@@ -87,16 +88,17 @@ export async function POST(request: Request) {
       selectedVisibilityType: VisibilityType;
     } = requestBody;
 
-    const session = await auth();
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
 
-    if (!session?.user) {
+    if (!user) {
       return new ChatSDKError('unauthorized:chat').toResponse();
     }
 
-    const userType: UserType = session.user.type;
+    const userType: UserType = 'regular';
 
     const messageCount = await getMessageCountByUserId({
-      id: session.user.id,
+      id: user.id,
       differenceInHours: 24,
     });
 
@@ -113,12 +115,12 @@ export async function POST(request: Request) {
 
       await saveChat({
         id,
-        userId: session.user.id,
+        userId: user.id,
         title,
         visibility: selectedVisibilityType,
       });
     } else {
-      if (chat.userId !== session.user.id) {
+      if (chat.userId !== user.id) {
         return new ChatSDKError('forbidden:chat').toResponse();
       }
     }
@@ -153,6 +155,15 @@ export async function POST(request: Request) {
 
     let finalUsage: LanguageModelUsage | undefined;
 
+    const sessionForTools = {
+      id: user.id,
+      email: user.email ?? null,
+      avatar: null,
+      fullname: null,
+      isAuthenticated: true,
+      signout: async () => {},
+    } as const;
+
     const stream = createUIMessageStream({
       execute: ({ writer: dataStream }) => {
         const result = streamText({
@@ -172,12 +183,9 @@ export async function POST(request: Request) {
           experimental_transform: smoothStream({ chunking: 'word' }),
           tools: {
             getWeather,
-            createDocument: createDocument({ session, dataStream }),
-            updateDocument: updateDocument({ session, dataStream }),
-            requestSuggestions: requestSuggestions({
-              session,
-              dataStream,
-            }),
+            createDocument: createDocument({ session: sessionForTools, dataStream }),
+            updateDocument: updateDocument({ session: sessionForTools, dataStream }),
+            requestSuggestions: requestSuggestions({ session: sessionForTools, dataStream }),
           },
           experimental_telemetry: {
             isEnabled: isProductionEnvironment,
@@ -255,15 +263,16 @@ export async function DELETE(request: Request) {
     return new ChatSDKError('bad_request:api').toResponse();
   }
 
-  const session = await auth();
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
 
-  if (!session?.user) {
+  if (!user) {
     return new ChatSDKError('unauthorized:chat').toResponse();
   }
 
   const chat = await getChatById({ id });
 
-  if (chat?.userId !== session.user.id) {
+  if (chat?.userId !== user.id) {
     return new ChatSDKError('forbidden:chat').toResponse();
   }
 
