@@ -2,7 +2,7 @@ import { codeDocumentHandler } from '@/artifacts/code/server';
 import { sheetDocumentHandler } from '@/artifacts/sheet/server';
 import { textDocumentHandler } from '@/artifacts/text/server';
 import type { ArtifactKind } from '@/components/artifact';
-import type { Document } from '../db/schema';
+import type { Document } from '../db/queries';
 import { saveDocument } from '../db/queries';
 type Session = { id: string };
 import type { UIMessageStreamWriter } from 'ai';

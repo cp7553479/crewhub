@@ -8,7 +8,6 @@ import {
   streamText,
 } from 'ai';
 import { createClient } from '@/utils/supabase/server';
-type UserType = 'regular' | 'guest';
 import { type RequestHints, systemPrompt } from '@/lib/ai/prompts';
 import {
   createStreamId,
@@ -18,8 +17,8 @@ import {
   getMessagesByChatId,
   saveChat,
   saveMessages,
+  updateChatLastContextById,
 } from '@/lib/db/queries';
-import { updateChatLastContextById } from '@/lib/db/queries';
 import { convertToUIMessages, generateUUID } from '@/lib/utils';
 import { generateTitleFromUserMessage } from '../../actions';
 import { createDocument } from '@/lib/ai/tools/create-document';
@@ -28,7 +27,7 @@ import { requestSuggestions } from '@/lib/ai/tools/request-suggestions';
 import { getWeather } from '@/lib/ai/tools/get-weather';
 import { isProductionEnvironment } from '@/lib/constants';
 import { myProvider } from '@/lib/ai/providers';
-import { entitlementsByUserType } from '@/lib/ai/entitlements';
+import { userEntitlements } from '@/lib/ai/entitlements';
 import { postRequestBodySchema, type PostRequestBody } from './schema';
 import { geolocation } from '@vercel/functions';
 import {
@@ -40,6 +39,7 @@ import { ChatSDKError } from '@/lib/errors';
 import type { ChatMessage } from '@/lib/types';
 import type { ChatModel } from '@/lib/ai/models';
 import type { VisibilityType } from '@/components/visibility-selector';
+
 
 export const maxDuration = 60;
 
@@ -95,14 +95,12 @@ export async function POST(request: Request) {
       return new ChatSDKError('unauthorized:chat').toResponse();
     }
 
-    const userType: UserType = 'regular';
-
     const messageCount = await getMessageCountByUserId({
       id: user.id,
       differenceInHours: 24,
     });
 
-    if (messageCount > entitlementsByUserType[userType].maxMessagesPerDay) {
+    if (messageCount > userEntitlements.maxMessagesPerDay) {
       return new ChatSDKError('rate_limit:chat').toResponse();
     }
 
@@ -143,8 +141,7 @@ export async function POST(request: Request) {
           chatId: id,
           id: message.id,
           role: 'user',
-          parts: message.parts,
-          attachments: [],
+          content: message.parts,
           createdAt: new Date(),
         },
       ],
@@ -211,9 +208,8 @@ export async function POST(request: Request) {
           messages: messages.map((message) => ({
             id: message.id,
             role: message.role,
-            parts: message.parts,
+            content: message.parts,
             createdAt: new Date(),
-            attachments: [],
             chatId: id,
           })),
         });

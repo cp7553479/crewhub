@@ -109,10 +109,7 @@ crewhub/
 │   ├── const/                    # 常量定义
 │   │   └── schema-utils.ts       # 数据库模式工具和常量
 │   ├── db/                       # 数据库相关
-│   │   ├── schema.ts             # Drizzle 数据库模式
-│   │   ├── queries.ts            # 数据库查询函数
-│   │   ├── migrate.ts            # 数据库迁移脚本
-│   │   └── migrations/           # 迁移文件
+│   │   └── queries.ts            # 数据库查询函数
 │   ├── ai/                       # AI 相关功能
 │   │   ├── models.ts             # AI 模型配置
 │   │   ├── prompts.ts            # 提示词模板
@@ -128,7 +125,7 @@ crewhub/
 │   ├── e2e/                      # 端到端测试
 │   ├── pages/                    # 页面测试
 │   └── prompts/                  # 提示词测试
-├── drizzle.config.ts             # Drizzle ORM 配置
+
 ├── middleware.ts                 # Next.js 中间件
 ├── next.config.ts                # Next.js 配置
 ├── package.json                  # 项目依赖和脚本
@@ -150,9 +147,7 @@ crewhub/
 #### `/lib` - 核心库
 - **`const/`**: 常量定义，包含数据库模式工具和常量
 - **`db/`**: 数据库相关文件
-  - `schema.ts`: Drizzle ORM 数据库模式定义
   - `queries.ts`: 数据库查询函数集合
-  - `migrate.ts`: 数据库迁移脚本
 - **`ai/`**: AI 功能相关
   - `models.ts`: AI 模型配置
   - `prompts.ts`: 提示词模板
@@ -167,10 +162,10 @@ crewhub/
 
 ### 数据库管理
 
-项目使用 Drizzle ORM 管理 PostgreSQL 数据库：
+项目使用 Supabase 管理 PostgreSQL 数据库：
 
-- **模式定义**: `lib/db/schema.ts` 定义了所有数据库表结构
+- **Schema**: 所有数据表存储在 `chat` schema 下
 - **查询函数**: `lib/db/queries.ts` 包含所有数据库操作
 - **常量工具**: `lib/const/schema-utils.ts` 提供类型安全的字段和表名常量
-- **迁移管理**: 使用 `drizzle-kit` 进行数据库迁移
+- **数据库管理**: 使用 Supabase Dashboard 进行数据库管理和迁移
 

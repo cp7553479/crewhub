@@ -2,7 +2,7 @@ import { z } from 'zod';
 type Session = { id: string; email: string | null };
 import { streamObject, tool, type UIMessageStreamWriter } from 'ai';
 import { getDocumentById, saveSuggestions } from '@/lib/db/queries';
-import type { Suggestion } from '@/lib/db/schema';
+import type { Suggestion } from '@/lib/db/queries';
 import { generateUUID } from '@/lib/utils';
 import { myProvider } from '../providers';
 import type { ChatMessage } from '@/lib/types';
@@ -57,7 +57,10 @@ export const requestSuggestions = ({
           description: element.description,
           id: generateUUID(),
           documentId: documentId,
+          documentCreatedAt: document.createdAt,
           isResolved: false,
+          userId: session?.id || '',
+          createdAt: new Date(),
         };
 
         dataStream.write({

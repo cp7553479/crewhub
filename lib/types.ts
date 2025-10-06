@@ -6,7 +6,7 @@ import type { requestSuggestions } from './ai/tools/request-suggestions';
 import type { InferUITool, LanguageModelUsage, UIMessage } from 'ai';
 
 import type { ArtifactKind } from '@/components/artifact';
-import type { Suggestion } from './db/schema';
+import type { Suggestion } from './db/queries';
 
 export type DataPart = { type: 'append-message'; message: string };
 

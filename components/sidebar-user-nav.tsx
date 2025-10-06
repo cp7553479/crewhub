@@ -21,6 +21,7 @@ import {
 import { useRouter } from 'next/navigation';
 import { toast } from './toast';
 import { LoaderIcon } from './icons';
+
 export function SidebarUserNav() {
   const router = useRouter();
   const isLoading = false;
