@@ -268,7 +268,7 @@ function PureMultimodalInput({
               className="rounded-full"
               size="icon"
               variant="outline"
-              onClick={(event: React.MouseEvent) => {
+              onClick={(event: React.MouseEvent<HTMLButtonElement>) => {
                 event.preventDefault();
                 scrollToBottom();
               }}
@@ -414,7 +414,7 @@ function PureAttachmentsButton({
     <Button
       data-testid="attachments-button"
       className='p-1 h-8 rounded-lg transition-colors aspect-square hover:bg-accent'
-      onClick={(event: React.MouseEvent) => {
+      onClick={(event: React.MouseEvent<HTMLButtonElement>) => {
         event.preventDefault();
         fileInputRef.current?.click();
       }}
@@ -493,7 +493,7 @@ function PureStopButton({
     <Button
       data-testid="stop-button"
       className="p-1 rounded-full transition-colors duration-200 size-7 bg-foreground text-background hover:bg-foreground/90 disabled:bg-muted disabled:text-muted-foreground"
-      onClick={(event: React.MouseEvent) => {
+      onClick={(event: React.MouseEvent<HTMLButtonElement>) => {
         event.preventDefault();
         stop();
         setMessages((messages) => messages);
