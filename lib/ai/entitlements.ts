@@ -7,5 +7,5 @@ interface Entitlements {
 
 export const userEntitlements: Entitlements = {
   maxMessagesPerDay: 100,
-  availableChatModelIds: ['chat-model', 'chat-model-reasoning'],
+  availableChatModelIds: ['chat-model', 'chat-model-reasoning', 'base-assistant'],
 };

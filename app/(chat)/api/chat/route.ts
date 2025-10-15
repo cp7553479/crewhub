@@ -90,6 +90,7 @@ export async function POST(request: Request) {
 
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
+    const { data: { session } } = await supabase.auth.getSession();
 
     if (!user) {
       return new ChatSDKError('unauthorized:chat').toResponse();
@@ -168,7 +169,7 @@ export async function POST(request: Request) {
           system: systemPrompt({ selectedChatModel, requestHints }),
           messages: convertToModelMessages(uiMessages),
           stopWhen: stepCountIs(5),
-          experimental_activeTools:
+          activeTools:
             selectedChatModel === 'chat-model-reasoning'
               ? []
               : [
@@ -188,14 +189,22 @@ export async function POST(request: Request) {
             isEnabled: isProductionEnvironment,
             functionId: 'stream-text',
           },
+          // 为 base-assistant 模型添加特殊的 headers
+          ...(selectedChatModel === 'base-assistant' && session?.access_token && {
+            headers: {
+              'Authorization': `Bearer ${session.access_token}`,
+              'X-Thread-ID': id,
+            },
+          }),
           onFinish: ({ usage }) => {
+            console.log('usage: streamText onFinish:', usage);
             finalUsage = usage;
             dataStream.write({ type: 'data-usage', data: usage });
           },
         });
 
         result.consumeStream();
-
+        // 将 AI 模型的响应流合并到数据流中，让前端能够实时接收和显示 AI 的回复。
         dataStream.merge(
           result.toUIMessageStream({
             sendReasoning: true,

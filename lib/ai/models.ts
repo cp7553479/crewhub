@@ -18,4 +18,9 @@ export const chatModels: Array<ChatModel> = [
     description:
       'Uses advanced chain-of-thought reasoning for complex problems',
   },
+  {
+    id: 'base-assistant',
+    name: 'Base Assistant',
+    description: 'OpenAI-powered assistant with custom authentication',
+  },
 ];
