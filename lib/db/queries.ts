@@ -3,7 +3,6 @@ import 'server-only';
 import { createClient } from '@/utils/supabase/server';
 import type { ArtifactKind } from '@/components/artifact';
 import { generateUUID } from '../utils';
-import { generateHashedPassword } from './utils';
 import type { VisibilityType } from '@/components/visibility-selector';
 import { ChatSDKError } from '../errors';
 import type { LanguageModelV2Usage } from '@ai-sdk/provider';
@@ -12,7 +11,8 @@ import type { LanguageModelV2Usage } from '@ai-sdk/provider';
 export interface User {
   id: string;
   email: string;
-  password?: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface Chat {
@@ -67,40 +67,9 @@ interface DBMessage {
   createdAt: Date;
 }
 
-// 用户相关操作
-export async function getUser(email: string): Promise<Array<User>> {
-  try {
-    const supabase = await createClient();
-    const { data, error } = await supabase
-      .schema('chat').from('"User"')
-      .select('*')
-      .eq('email', email);
-    
-    if (error) throw error;
-    return data || [];
-  } catch (error) {
-    throw new ChatSDKError(
-      'bad_request:database',
-      'Failed to get user by email',
-    );
-  }
-}
-
-export async function createUser(email: string, password: string) {
-  const hashedPassword = generateHashedPassword(password);
-
-  try {
-    const supabase = await createClient();
-    const { data, error } = await supabase
-      .schema('chat').from('"User"')
-      .insert({ email, password: hashedPassword });
-    
-    if (error) throw error;
-    return data;
-  } catch (error) {
-    throw new ChatSDKError('bad_request:database', 'Failed to create user');
-  }
-}
+// 用户相关操作 - 使用 Supabase Auth
+// 注意：项目中使用 supabase.auth.getUser() 来获取当前用户
+// 不需要额外的数据库查询函数
 
 
 
@@ -119,7 +88,7 @@ export async function saveChat({
   try {
     const supabase = await createClient();
     const { data, error } = await supabase
-      .schema('chat').from('"Chat"')
+      .schema('chat').from('Chat')
       .insert({
         id,
         createdAt: new Date().toISOString(),
@@ -140,17 +109,17 @@ export async function deleteChatById({ id }: { id: string }) {
     const supabase = await createClient();
     
     // 删除相关的投票
-    await supabase.schema('chat').from('"Vote"').delete().eq('"chatId"', id);
+    await supabase.schema('chat').from('Vote').delete().eq('chatId', id);
     
     // 删除相关的消息
-    await supabase.schema('chat').from('"Message"').delete().eq('"chatId"', id);
+    await supabase.schema('chat').from('Message').delete().eq('chatId', id);
     
     // 删除相关的流
-    await supabase.schema('chat').from('"Stream"').delete().eq('"chatId"', id);
+    await supabase.schema('chat').from('Stream').delete().eq('chatId', id);
 
     // 删除聊天记录
     const { data, error } = await supabase
-      .schema('chat').from('"Chat"')
+      .schema('chat').from('Chat')
       .delete()
       .eq('id', id)
       .select()
@@ -182,16 +151,16 @@ export async function getChatsByUserId({
     const extendedLimit = limit + 1;
 
     let query = supabase
-      .schema('chat').from('"Chat"')
+      .schema('chat').from('Chat')
       .select('*')
-      .eq('"userId"', id)
-      .order('"createdAt"', { ascending: false })
+      .eq('userId', id)
+      .order('createdAt', { ascending: false })
       .limit(extendedLimit);
 
     if (startingAfter) {
       const { data: selectedChat, error: chatError } = await supabase
-        .schema('chat').from('"Chat"')
-        .select('"createdAt"')
+        .schema('chat').from('Chat')
+        .select('createdAt')
         .eq('id', startingAfter)
         .single();
 
@@ -202,11 +171,11 @@ export async function getChatsByUserId({
         );
       }
 
-      query = query.gt('"createdAt"', selectedChat.createdAt);
+      query = query.gt('createdAt', selectedChat.createdAt);
     } else if (endingBefore) {
       const { data: selectedChat, error: chatError } = await supabase
-        .schema('chat').from('"Chat"')
-        .select('"createdAt"')
+        .schema('chat').from('Chat')
+        .select('createdAt')
         .eq('id', endingBefore)
         .single();
 
@@ -217,7 +186,7 @@ export async function getChatsByUserId({
         );
       }
 
-      query = query.lt('"createdAt"', selectedChat.createdAt);
+      query = query.lt('createdAt', selectedChat.createdAt);
     }
 
     const { data: filteredChats, error } = await query;
@@ -231,6 +200,8 @@ export async function getChatsByUserId({
       hasMore,
     };
   } catch (error) {
+    console.error('getChatsByUserId error:', error);
+    console.error('User ID:', id);
     throw new ChatSDKError(
       'bad_request:database',
       'Failed to get chats by user id',
@@ -242,7 +213,7 @@ export async function getChatById({ id }: { id: string }) {
   try {
     const supabase = await createClient();
     const { data, error } = await supabase
-      .schema('chat').from('"Chat"')
+      .schema('chat').from('Chat')
       .select('*')
       .eq('id', id)
       .maybeSingle();
@@ -253,6 +224,7 @@ export async function getChatById({ id }: { id: string }) {
     
     return data;
   } catch (error) {
+    console.error('getChatById error:', error);
     throw new ChatSDKError('bad_request:database', 'Failed to get chat by id');
   }
 }
@@ -266,7 +238,7 @@ export async function saveMessages({
   try {
     const supabase = await createClient();
     const { data, error } = await supabase
-      .schema('chat').from('"Message"')
+      .schema('chat').from('Message')
       .insert(messages);
     
     if (error) throw error;
@@ -280,10 +252,10 @@ export async function getMessagesByChatId({ id }: { id: string }) {
   try {
     const supabase = await createClient();
     const { data, error } = await supabase
-      .schema('chat').from('"Message"')
+      .schema('chat').from('Message')
       .select('*')
-      .eq('"chatId"', id)
-      .order('"createdAt"', { ascending: true });
+      .eq('chatId', id)
+      .order('createdAt', { ascending: true });
     
     if (error) throw error;
     return data || [];
@@ -299,7 +271,7 @@ export async function getMessageById({ id }: { id: string }) {
   try {
     const supabase = await createClient();
     const { data, error } = await supabase
-      .schema('chat').from('"Message"')
+      .schema('chat').from('Message')
       .select('*')
       .eq('id', id);
     
@@ -325,10 +297,10 @@ export async function deleteMessagesByChatIdAfterTimestamp({
     
     // 首先获取要删除的消息ID
     const { data: messagesToDelete, error: selectError } = await supabase
-      .schema('chat').from('"Message"')
+      .schema('chat').from('Message')
       .select('id')
-      .eq('"chatId"', chatId)
-      .gte('"createdAt"', timestamp.toISOString());
+      .eq('chatId', chatId)
+      .gte('createdAt', timestamp.toISOString());
     
     if (selectError) throw selectError;
     
@@ -337,16 +309,16 @@ export async function deleteMessagesByChatIdAfterTimestamp({
     if (messageIds.length > 0) {
       // 删除相关投票
       await supabase
-        .schema('chat').from('"Vote"')
+        .schema('chat').from('Vote')
         .delete()
-        .eq('"chatId"', chatId)
-        .in('"messageId"', messageIds);
+        .eq('chatId', chatId)
+        .in('messageId', messageIds);
 
       // 删除消息
       const { data, error } = await supabase
-        .schema('chat').from('"Message"')
+        .schema('chat').from('Message')
         .delete()
-        .eq('"chatId"', chatId)
+        .eq('chatId', chatId)
         .in('id', messageIds);
       
       if (error) throw error;
@@ -375,25 +347,25 @@ export async function voteMessage({
     
     // 检查是否已存在投票
     const { data: existingVote, error: selectError } = await supabase
-      .schema('chat').from('"Vote"')
+      .schema('chat').from('Vote')
       .select('*')
-      .eq('"messageId"', messageId)
+      .eq('messageId', messageId)
       .single();
 
     if (existingVote) {
       // 更新现有投票
       const { data, error } = await supabase
-        .schema('chat').from('"Vote"')
+        .schema('chat').from('Vote')
         .update({ isUpvoted: type === 'up' })
-        .eq('"messageId"', messageId)
-        .eq('"chatId"', chatId);
+        .eq('messageId', messageId)
+        .eq('chatId', chatId);
       
       if (error) throw error;
       return data;
     } else {
       // 创建新投票
       const { data, error } = await supabase
-        .schema('chat').from('"Vote"')
+        .schema('chat').from('Vote')
         .insert({
           chatId,
           messageId,
@@ -411,10 +383,11 @@ export async function voteMessage({
 export async function getVotesByChatId({ id }: { id: string }) {
   try {
     const supabase = await createClient();
+    // 该查询不涉及嵌套关系，直接按 chatId 过滤即可
     const { data, error } = await supabase
-      .schema('chat').from('"Vote"')
+      .schema('chat').from('Vote')
       .select('*')
-      .eq('"chatId"', id);
+      .eq('chatId', id);
     
     if (error) throw error;
     return data || [];
@@ -443,7 +416,7 @@ export async function saveDocument({
   try {
     const supabase = await createClient();
     const { data, error } = await supabase
-      .schema('chat').from('"Document"')
+      .schema('chat').from('Document')
       .insert({
         id,
         title,
@@ -465,10 +438,10 @@ export async function getDocumentsByUserId({ userId }: { userId: string }) {
   try {
     const supabase = await createClient();
     const { data, error } = await supabase
-      .schema('chat').from('"Document"')
+      .schema('chat').from('Document')
       .select('*')
-      .eq('"userId"', userId)
-      .order('"createdAt"', { ascending: false });
+      .eq('userId', userId)
+      .order('createdAt', { ascending: false });
     
     if (error) throw error;
     return data || [];
@@ -484,7 +457,7 @@ export async function getDocumentsById({ id }: { id: string }) {
   try {
     const supabase = await createClient();
     const { data, error } = await supabase
-      .schema('chat').from('"Document"')
+      .schema('chat').from('Document')
       .select('*')
       .eq('id', id);
     
@@ -502,7 +475,7 @@ export async function getDocumentById({ id }: { id: string }) {
   try {
     const supabase = await createClient();
     const { data, error } = await supabase
-      .schema('chat').from('"Document"')
+      .schema('chat').from('Document')
       .select('*')
       .eq('id', id)
       .maybeSingle();
@@ -532,17 +505,17 @@ export async function deleteDocumentsByIdAfterTimestamp({
     
     // 删除相关建议
     await supabase
-      .schema('chat').from('"Suggestion"')
+      .schema('chat').from('Suggestion')
       .delete()
-      .eq('"documentId"', id)
-      .gt('"documentCreatedAt"', timestamp.toISOString());
+      .eq('documentId', id)
+      .gt('documentCreatedAt', timestamp.toISOString());
 
     // 删除文档
     const { data, error } = await supabase
-      .schema('chat').from('"Document"')
+      .schema('chat').from('Document')
       .delete()
       .eq('id', id)
-      .gt('"createdAt"', timestamp.toISOString())
+      .gt('createdAt', timestamp.toISOString())
       .select();
     
     if (error) throw error;
@@ -564,7 +537,7 @@ export async function saveSuggestions({
   try {
     const supabase = await createClient();
     const { data, error } = await supabase
-      .schema('chat').from('"Suggestion"')
+      .schema('chat').from('Suggestion')
       .insert(suggestions);
     
     if (error) throw error;
@@ -585,9 +558,9 @@ export async function getSuggestionsByDocumentId({
   try {
     const supabase = await createClient();
     const { data, error } = await supabase
-      .schema('chat').from('"Suggestion"')
+      .schema('chat').from('Suggestion')
       .select('*')
-      .eq('"documentId"', documentId);
+      .eq('documentId', documentId);
     
     if (error) throw error;
     return data || [];
@@ -610,7 +583,7 @@ export async function updateChatVisiblityById({
   try {
     const supabase = await createClient();
     const { data, error } = await supabase
-      .schema('chat').from('"Chat"')
+      .schema('chat').from('Chat')
       .update({ visibility })
       .eq('id', chatId);
     
@@ -634,7 +607,7 @@ export async function updateChatLastContextById({
   try {
     const supabase = await createClient();
     const { data, error } = await supabase
-      .schema('chat').from('"Chat"')
+      .schema('chat').from('Chat')
       .update({ lastContext: context })
       .eq('id', chatId);
     
@@ -660,16 +633,31 @@ export async function getMessageCountByUserId({
       Date.now() - differenceInHours * 60 * 60 * 1000,
     ).toISOString();
 
-    const { data, error } = await supabase
-      .schema('chat').from('"Message"')
-      .select('id, "Chat"!inner("userId")', { count: 'exact' })
-      .eq('"Chat"."userId"', id)
-      .gte('"createdAt"', twentyFourHoursAgo)
-      .eq('"role"', 'user');
-    
-    if (error) throw error;
-    return data?.length || 0;
+    // Step 1: 获取该用户的 Chat.id 列表
+    const { data: chats, error: chatError } = await supabase
+      .schema('chat')
+      .from('Chat')
+      .select('id')
+      .eq('userId', id);
+
+    if (chatError) throw chatError;
+
+    const chatIds = (chats || []).map((c: { id: string }) => c.id);
+    if (chatIds.length === 0) return 0;
+
+    // Step 2: 只计数这些会话下、时间范围内、角色为 user 的消息
+    const { count, error: msgError } = await supabase
+      .schema('chat')
+      .from('Message')
+      .select('*', { count: 'exact', head: true })
+      .in('chatId', chatIds)
+      .gte('createdAt', twentyFourHoursAgo)
+      .eq('role', 'user');
+
+    if (msgError) throw msgError;
+    return count || 0;
   } catch (error) {
+    console.error('getMessageCountByUserId error:', error);
     throw new ChatSDKError(
       'bad_request:database',
       'Failed to get message count by user id',
@@ -688,7 +676,7 @@ export async function createStreamId({
   try {
     const supabase = await createClient();
     const { data, error } = await supabase
-      .schema('chat').from('"Stream"')
+      .schema('chat').from('Stream')
       .insert({ 
         id: streamId, 
         chatId, 
@@ -709,10 +697,10 @@ export async function getStreamIdsByChatId({ chatId }: { chatId: string }) {
   try {
     const supabase = await createClient();
     const { data, error } = await supabase
-      .schema('chat').from('"Stream"')
+      .schema('chat').from('Stream')
       .select('id')
-      .eq('"chatId"', chatId)
-      .order('"createdAt"', { ascending: true });
+      .eq('chatId', chatId)
+      .order('createdAt', { ascending: true });
     
     if (error) throw error;
     return data?.map(({ id }) => id) || [];
