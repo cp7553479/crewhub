@@ -10,6 +10,7 @@ import type { ChatMessage } from '@/lib/types';
 import { createUIMessageStream, JsonToSseTransformStream } from 'ai';
 import { getStreamContext } from '../../route';
 import { differenceInSeconds } from 'date-fns';
+import { error } from 'console';
 
 export async function GET(
   _: Request,
@@ -38,11 +39,13 @@ export async function GET(
 
   try {
     chat = await getChatById({ id: chatId });
-  } catch {
+  } catch (error) {
+    console.error('[id] stream getChatById error:', error);
     return new ChatSDKError('not_found:chat').toResponse();
   }
 
   if (!chat) {
+    console.error('[id] stream chat not found');
     return new ChatSDKError('not_found:chat').toResponse();
   }
 

@@ -7,6 +7,15 @@ import type { VisibilityType } from '@/components/visibility-selector';
 import { ChatSDKError } from '../errors';
 import type { LanguageModelV2Usage } from '@ai-sdk/provider';
 
+// React Postpone 错误透传检测
+function isReactPostponeError(err: unknown): boolean {
+  return !!(
+    err &&
+    typeof err === 'object' &&
+    (err as any).$$typeof === Symbol.for('react.postpone')
+  );
+}
+
 // Define types for compatibility
 export interface User {
   id: string;
@@ -100,6 +109,8 @@ export async function saveChat({
     if (error) throw error;
     return data;
   } catch (error) {
+    if (isReactPostponeError(error)) { throw error; }
+    console.error('saveChat error:', { userId, id, title, visibility, error });
     throw new ChatSDKError('bad_request:database', 'Failed to save chat');
   }
 }
@@ -128,6 +139,8 @@ export async function deleteChatById({ id }: { id: string }) {
     if (error) throw error;
     return data;
   } catch (error) {
+    if (isReactPostponeError(error)) { throw error; }
+    console.error('deleteChatById error:', { id, error });
     throw new ChatSDKError(
       'bad_request:database',
       'Failed to delete chat by id',
@@ -200,6 +213,7 @@ export async function getChatsByUserId({
       hasMore,
     };
   } catch (error) {
+    if (isReactPostponeError(error)) { throw error; }
     console.error('getChatsByUserId error:', error);
     console.error('User ID:', id);
     throw new ChatSDKError(
@@ -224,6 +238,7 @@ export async function getChatById({ id }: { id: string }) {
     
     return data;
   } catch (error) {
+    if (isReactPostponeError(error)) { throw error; }
     console.error('getChatById error:', error);
     throw new ChatSDKError('bad_request:database', 'Failed to get chat by id');
   }
@@ -244,6 +259,8 @@ export async function saveMessages({
     if (error) throw error;
     return data;
   } catch (error) {
+    if (isReactPostponeError(error)) { throw error; }
+    console.error('saveMessages error:', { messages, error });
     throw new ChatSDKError('bad_request:database', 'Failed to save messages');
   }
 }
@@ -260,6 +277,8 @@ export async function getMessagesByChatId({ id }: { id: string }) {
     if (error) throw error;
     return data || [];
   } catch (error) {
+    if (isReactPostponeError(error)) { throw error; }
+    console.error('getMessagesByChatId error:', { id, error });
     throw new ChatSDKError(
       'bad_request:database',
       'Failed to get messages by chat id',
@@ -278,6 +297,8 @@ export async function getMessageById({ id }: { id: string }) {
     if (error) throw error;
     return data || [];
   } catch (error) {
+    if (isReactPostponeError(error)) { throw error; }
+    console.error('getMessageById error:', { id, error });
     throw new ChatSDKError(
       'bad_request:database',
       'Failed to get message by id',
@@ -325,6 +346,8 @@ export async function deleteMessagesByChatIdAfterTimestamp({
       return data;
     }
   } catch (error) {
+    if (isReactPostponeError(error)) { throw error; }
+    console.error('deleteMessagesByChatIdAfterTimestamp error:', { chatId, timestamp, error });
     throw new ChatSDKError(
       'bad_request:database',
       'Failed to delete messages by chat id after timestamp',
@@ -376,6 +399,8 @@ export async function voteMessage({
       return data;
     }
   } catch (error) {
+    if (isReactPostponeError(error)) { throw error; }
+    console.error('voteMessage error:', { chatId, messageId, type, error });
     throw new ChatSDKError('bad_request:database', 'Failed to vote message');
   }
 }
@@ -392,6 +417,8 @@ export async function getVotesByChatId({ id }: { id: string }) {
     if (error) throw error;
     return data || [];
   } catch (error) {
+    if (isReactPostponeError(error)) { throw error; }
+    console.error('getVotesByChatId error:', { id, error });
     throw new ChatSDKError(
       'bad_request:database',
       'Failed to get votes by chat id',
@@ -430,6 +457,8 @@ export async function saveDocument({
     if (error) throw error;
     return data;
   } catch (error) {
+    if (isReactPostponeError(error)) { throw error; }
+    console.error('saveDocument error:', { id, title, kind, userId, error });
     throw new ChatSDKError('bad_request:database', 'Failed to save document');
   }
 }
@@ -446,6 +475,8 @@ export async function getDocumentsByUserId({ userId }: { userId: string }) {
     if (error) throw error;
     return data || [];
   } catch (error) {
+    if (isReactPostponeError(error)) { throw error; }
+    console.error('getDocumentsByUserId error:', { userId, error });
     throw new ChatSDKError(
       'bad_request:database',
       'Failed to get documents by user id',
@@ -464,6 +495,8 @@ export async function getDocumentsById({ id }: { id: string }) {
     if (error) throw error;
     return data || [];
   } catch (error) {
+    if (isReactPostponeError(error)) { throw error; }
+    console.error('getDocumentsById error:', { id, error });
     throw new ChatSDKError(
       'bad_request:database',
       'Failed to get documents by id',
@@ -486,6 +519,8 @@ export async function getDocumentById({ id }: { id: string }) {
     
     return data;
   } catch (error) {
+    if (isReactPostponeError(error)) { throw error; }
+    console.error('getDocumentById error:', { id, error });
     throw new ChatSDKError(
       'bad_request:database',
       'Failed to get document by id',
@@ -521,6 +556,8 @@ export async function deleteDocumentsByIdAfterTimestamp({
     if (error) throw error;
     return data;
   } catch (error) {
+    if (isReactPostponeError(error)) { throw error; }
+    console.error('deleteDocumentsByIdAfterTimestamp error:', { id, timestamp, error });
     throw new ChatSDKError(
       'bad_request:database',
       'Failed to delete documents by id after timestamp',
@@ -543,6 +580,8 @@ export async function saveSuggestions({
     if (error) throw error;
     return data;
   } catch (error) {
+    if (isReactPostponeError(error)) { throw error; }
+    console.error('saveSuggestions error:', { suggestions, error });
     throw new ChatSDKError(
       'bad_request:database',
       'Failed to save suggestions',
@@ -565,6 +604,8 @@ export async function getSuggestionsByDocumentId({
     if (error) throw error;
     return data || [];
   } catch (error) {
+    if (isReactPostponeError(error)) { throw error; }
+    console.error('getSuggestionsByDocumentId error:', { documentId, error });
     throw new ChatSDKError(
       'bad_request:database',
       'Failed to get suggestions by document id',
@@ -590,6 +631,8 @@ export async function updateChatVisiblityById({
     if (error) throw error;
     return data;
   } catch (error) {
+    if (isReactPostponeError(error)) { throw error; }
+    console.error('updateChatVisiblityById error:', { chatId, visibility, error });
     throw new ChatSDKError(
       'bad_request:database',
       'Failed to update chat visibility by id',
@@ -614,6 +657,7 @@ export async function updateChatLastContextById({
     if (error) throw error;
     return data;
   } catch (error) {
+    if (isReactPostponeError(error)) { throw error; }
     console.warn('Failed to update lastContext for chat', chatId, error);
     return;
   }
@@ -657,6 +701,7 @@ export async function getMessageCountByUserId({
     if (msgError) throw msgError;
     return count || 0;
   } catch (error) {
+    if (isReactPostponeError(error)) { throw error; }
     console.error('getMessageCountByUserId error:', error);
     throw new ChatSDKError(
       'bad_request:database',
@@ -686,6 +731,8 @@ export async function createStreamId({
     if (error) throw error;
     return data;
   } catch (error) {
+    if (isReactPostponeError(error)) { throw error; }
+    console.error('createStreamId error:', { streamId, chatId, error });
     throw new ChatSDKError(
       'bad_request:database',
       'Failed to create stream id',
@@ -705,6 +752,8 @@ export async function getStreamIdsByChatId({ chatId }: { chatId: string }) {
     if (error) throw error;
     return data?.map(({ id }) => id) || [];
   } catch (error) {
+    if (isReactPostponeError(error)) { throw error; }
+    console.error('getStreamIdsByChatId error:', { chatId, error });
     throw new ChatSDKError(
       'bad_request:database',
       'Failed to get stream ids by chat id',
